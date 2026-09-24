@@ -1,5 +1,0 @@
-vendor/
-tmp/
-.git/
-.env/
-config.yaml

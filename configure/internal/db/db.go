@@ -51,11 +51,6 @@ func Configure() {
 	// Extract each components' database credentials to generate init.sql
 	dirs := []string{
 		"lab00",
-		"lab01",
-		"lab02",
-		"lab03",
-		"lab04",
-		"lab05",
 	}
 	sqlInit := new(strings.Builder)
 	for _, labDir := range dirs {
