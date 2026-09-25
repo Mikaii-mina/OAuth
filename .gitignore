@@ -1,9 +1,12 @@
 .env
+.idea/
 bin/
 tmp/
 docker/caddy/data
 docker/caddy/config
 .cache/
+__pycache__/
+*.pyc
 ignore/
 docker/lab*/client.config.yaml
 docker/lab*/server.config.yaml

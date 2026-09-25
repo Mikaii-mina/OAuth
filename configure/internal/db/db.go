@@ -28,7 +28,7 @@ type configWrapper struct {
 	Database databaseConfig `yaml:"database"`
 }
 
-func Configure() {
+func Configure(dirs []string) {
 	dockerDBDir := filepath.Join(constants.DockerDir, "db")
 	if err := os.MkdirAll(dockerDBDir, 0o750); err != nil {
 		if !errors.Is(err, fs.ErrNotExist) {
@@ -49,9 +49,6 @@ func Configure() {
 	_ = w.Flush()
 
 	// Extract each components' database credentials to generate init.sql
-	dirs := []string{
-		"lab00",
-	}
 	sqlInit := new(strings.Builder)
 	for _, labDir := range dirs {
 		dockerLabDir := filepath.Join(constants.DockerDir, labDir)
@@ -63,7 +60,7 @@ func Configure() {
 	}
 
 	sqlInitFile := filepath.Join(constants.DockerDir, "db", "init.prod.sql")
-	fh, err = os.OpenFile(sqlInitFile, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0o644)
+	fh, err = os.OpenFile(sqlInitFile, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0o600)
 	if err != nil {
 		panic(err)
 	}

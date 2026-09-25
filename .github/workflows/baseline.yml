@@ -1,0 +1,42 @@
+name: Baseline
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  baseline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.23.2'
+          cache: false
+      - name: Check scaffolding
+        run: make check
+      - name: Check Go formatting
+        run: test -z "$(gofmt -l configure/cmd/configure/main.go configure/internal/db/db.go configure/internal/lab00/lab00.go configure/internal/lab00/lab00_test.go)"
+      - name: Generate local credentials
+        run: make config
+      - name: Validate Compose model
+        run: docker compose config -q
+      - name: Build and start baseline
+        run: make lab00
+      - name: Resolve local lab names
+        run: |
+          for lab in lab[0-9][0-9]; do
+            number="${lab#lab}"
+            echo "127.0.0.1 server-${number}.oauth.labs client-${number}.oauth.labs"
+          done | sudo tee -a /etc/hosts
+      - name: Verify baseline
+        run: make smoke
+      - name: Test completed experiments
+        run: python3 scripts/ci_experiments.py
+      - name: Diagnostics on failure
+        if: failure()
+        run: docker compose logs --no-color --tail=100
+      - name: Stop lab
+        if: always()
+        run: docker compose down -v

@@ -5,14 +5,15 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"strings"
 	"text/template"
 
 	"github.com/cyllective/oauth-labs/configure/internal/constants"
 	"github.com/cyllective/oauth-labs/configure/internal/utils"
 )
 
-func Configure() {
-	dockerLabDir := filepath.Join(constants.DockerDir, "lab00")
+func Configure(number string) {
+	dockerLabDir := filepath.Join(constants.DockerDir, "lab"+number)
 	if err := os.MkdirAll(dockerLabDir, 0o750); err != nil {
 		if !errors.Is(err, fs.ErrNotExist) {
 			panic(err)
@@ -22,7 +23,7 @@ func Configure() {
 	registrationSecret := utils.RandomHex(32)
 
 	clientConfigFile := filepath.Join(dockerLabDir, "client.config.yaml")
-	t, err := template.New("client_config").Parse(clientConfigTemplate)
+	t, err := template.New("client_config").Parse(numberedConfig(clientConfigTemplate, number))
 	if err != nil {
 		panic(err)
 	}
@@ -35,7 +36,7 @@ func Configure() {
 	})
 
 	serverConfigFile := filepath.Join(dockerLabDir, "server.config.yaml")
-	t, err = template.New("server_config").Parse(serverConfigTemplate)
+	t, err = template.New("server_config").Parse(numberedConfig(serverConfigTemplate, number))
 	if err != nil {
 		panic(err)
 	}
@@ -47,6 +48,13 @@ func Configure() {
 		"encryption_key":      utils.RandomHex(32),
 		"private_key":         utils.IndentPEM(utils.NewRSAPrivateKey(), 4),
 	})
+}
+
+func numberedConfig(config string, number string) string {
+	for _, prefix := range []string{"lab", "server-", "client-", "server", "client"} {
+		config = strings.ReplaceAll(config, prefix+"00", prefix+number)
+	}
+	return config
 }
 
 var clientConfigTemplate = `

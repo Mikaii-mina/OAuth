@@ -18,6 +18,7 @@ services:
     image: mariadb:11.4.3-noble
     volumes:
       - ./docker/db/init.prod.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      - db-data:/var/lib/mysql
     networks:
       - oauth-labs
     secrets:
@@ -31,6 +32,8 @@ services:
       - oauth-labs
 
   server-00:
+    environment:
+      LAB_VARIANT: ${LAB_VARIANT:-fixed}
     build:
       context: .
       dockerfile: ./docker/Dockerfile.baselab
@@ -38,6 +41,7 @@ services:
         LAB_NUMBER: '00'
         COMPONENT: server
     depends_on:
+      - caddy
       - db
       - valkey
     volumes:
@@ -48,6 +52,8 @@ services:
     mem_limit: 1g
 
   client-00:
+    environment:
+      LAB_VARIANT: ${LAB_VARIANT:-fixed}
     build:
       context: .
       dockerfile: ./docker/Dockerfile.baselab
@@ -55,6 +61,7 @@ services:
         LAB_NUMBER: '00'
         COMPONENT: client
     depends_on:
+      - caddy
       - db
       - valkey
       - server-00
@@ -71,3 +78,6 @@ secrets:
 
 networks:
   oauth-labs:
+
+volumes:
+  db-data:
