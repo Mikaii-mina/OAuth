@@ -1,27 +1,29 @@
-# OAuth experiment platform
+# OAuth 实验平台
 
-This is a fork of [cyllective/oauth-labs](https://github.com/cyllective/oauth-labs), based on upstream commit `5c97e34c8f18ee64a85306037641b12c53b8137a` (MIT license; see `LICENSE`). It retains the lab00 playground and adds an experiment scaffold and baseline checks. No vulnerability has been selected or implemented yet.
+本项目 fork 自 [`cyllective/oauth-labs`](https://github.com/cyllective/oauth-labs)，基于上游提交 `5c97e34c8f18ee64a85306037641b12c53b8137a`，使用 MIT 许可证，详见 `LICENSE`。当前保留 `lab00` 基线环境，并加入了实验脚手架、自动检查和 CI。暂未选定或实现具体漏洞。
 
-## Requirements
+## 环境要求
 
-- Docker Engine with Compose and the ability to build containers
-- Go 1.23.2 or newer (for configuration generation)
-- Free local TCP ports 80 and 443
-- DNS/hosts entries resolving `server-00.oauth.labs` and `client-00.oauth.labs` to `127.0.0.1`
+- Docker Desktop，包含 Docker Compose 和镜像构建功能
+- Go 1.23.2 或更高版本，用于生成配置
+- 本机 80 和 443 端口未被占用
+- `server-00.oauth.labs` 和 `client-00.oauth.labs` 解析到 `127.0.0.1`
 
-Add these entries to `/etc/hosts` (requires administrator access):
+在 `/etc/hosts` 中加入以下内容，需要管理员权限：
 
 ```text
 127.0.0.1 server-00.oauth.labs client-00.oauth.labs
 ```
 
-Run **only on a trusted local machine**; Caddy binds to loopback. The first browser visit will show a certificate warning because Caddy issues a local CA certificate. Trust that CA for this isolated lab only if needed.
+本平台只能在可信本机环境运行。Caddy 只绑定本机回环地址。首次访问时可能看到本地 CA 证书警告；确认域名确实是本地实验域名后，再按需要信任该证书。
 
 ## 团队使用流程
 
-队友使用相同的启动流程，但每台电脑的 Docker 数据卷和配置文件都是本地的，不从 GitHub 共享。
+每位队友都使用相同流程，但 Docker 数据卷、生成配置和实验账号都保存在各自电脑上，不会通过 GitHub 共享。
 
-**首次使用（每台电脑只需一次）：**安装并启动 Docker Desktop、安装 Go 1.23.2+，按上文配置 `/etc/hosts`，然后运行：
+### 首次使用
+
+每台电脑只需执行一次：安装并启动 Docker Desktop，安装 Go 1.23.2 或更高版本，配置 `/etc/hosts`，然后运行：
 
 ```sh
 git clone https://github.com/Mikaii-mina/OAuth.git
@@ -32,14 +34,114 @@ docker compose ps
 make smoke
 ```
 
-**日常使用：**先启动 Docker Desktop，在仓库目录运行 `make lab00`，确认 `docker compose ps` 中 `caddy`、`db`、`valkey`、`server-00` 和 `client-00` 均为 `Up`，再运行 `make smoke`。打开 `https://server-00.oauth.labs/register` 注册实验账号，然后访问 `https://client-00.oauth.labs` 演示授权流程。用完执行 `make lab-down`，保留本地实验数据。
+确认 `caddy`、`db`、`valkey`、`server-00` 和 `client-00` 都显示为 `Up` 后，打开：
 
-**需要清空环境时：**运行 `make lab-reset`、`make config`、`make lab00`、`make smoke`。`make lab-reset` 会删除本地数据库数据；不要单独运行 `make config`，否则新密码可能与旧数据库卷不一致。配置文件和凭据已被 Git 忽略，不要手动提交。
+- `https://server-00.oauth.labs/register`：注册实验账号
+- `https://client-00.oauth.labs`：演示 OAuth 授权流程
 
-The client uses `state` and PKCE; `lab00` is a learning playground rather than a verified secure reference implementation. The smoke test checks health, the authorization URL's `state` and S256 PKCE parameters, and rejection of a bogus callback state. It does **not** exercise a complete authenticated flow or prove the implementation secure. It skips verification of the local Caddy CA certificate; never use this script against external hosts.
+### 日常使用
 
-## Adding future experiments
+启动 Docker Desktop 后，在仓库目录运行：
 
-Keep `lab00` unchanged as the reference playground. To scaffold a new isolated lab, run `python3 scripts/new_lab.py 1` (valid range 1–99). This copies the baseline source, adds Compose services and Caddy routes, and creates `lab01/scenario.json` and `lab01/README.md`. Review the generated files before use. No credentials are copied; `make config` discovers all `labNN` directories and generates new credentials and SQL for all of them. The configuration step **overwrites** all previously generated credentials: use `make labsdown` first, then `make config`, before starting again. Add `127.0.0.1 server-01.oauth.labs client-01.oauth.labs` to `/etc/hosts` for lab01.
+```sh
+make lab00
+docker compose ps
+make smoke
+```
 
-Start and inspect a lab with `make lab-up LAB=01` and `make lab-test LAB=01`. `lab-test` checks health, `state`, and PKCE in the fixed version; `python3 scripts/smoke.py --lab 01 --health-only` checks availability without assuming a vulnerability type. `make lab-down` stops **all** services but preserves the named database volume; `make lab-reset` stops everything and deletes **all** Compose volumes. Before shipping an experiment, replace the `undecided`/`pending` fields in its scenario, implement exactly one controlled defect selected by `LAB_VARIANT` (`fixed` or `vulnerable`), and implement `lab01/reproduce.py --variant ...` to print one JSON object with Boolean `exploitable` and `impact_verified` fields. `make experiment LAB=01` runs both variants in turn, waits for health, asserts vulnerable=true/true and fixed=false/false, and **deletes all Compose volumes** before, between, and after runs. Do not run it against existing data. The generated `reproduce.py` deliberately fails until implemented; merely setting `LAB_VARIANT` does not introduce a defect. CI automatically runs both variants for completed scenarios and skips unfinished scaffolds. Do not use these images or generated credentials on public networks.
+确认所有服务为 `Up` 后，再打开客户端网页。使用完毕后运行：
+
+```sh
+make lab-down
+```
+
+该命令只停止服务，不删除本地数据库数据，下次可以直接运行 `make lab00`。
+
+### 清空并重新初始化
+
+如果需要从全新环境开始，运行：
+
+```sh
+make lab-reset
+make config
+make lab00
+make smoke
+```
+
+`make lab-reset` 会删除本地数据库数据。不要单独运行 `make config`，因为它会重新生成数据库密码；如果旧数据库卷仍存在，新密码可能无法连接旧数据库。配置文件和凭据已被 Git 忽略，不要手动提交。
+
+## 当前基线流程
+
+`lab00` 是用于学习和观察 OAuth 授权码流程的基线环境，不代表完整安全实现。客户端使用 `state` 和 PKCE。
+
+```text
+浏览器 → client-00 /login
+客户端 → server-00 /oauth/authorize
+授权服务器 → client-00 /callback?code=...
+客户端 → server-00 /oauth/token
+客户端 → 资源接口获取用户资料
+```
+
+烟测会检查服务健康状态、授权 URL 中的 `state`、S256 PKCE 参数，以及错误 `state` 是否被拒绝。它不会执行完整的登录授权，也不能证明实现没有漏洞。
+
+## 新增漏洞实验
+
+保持 `lab00` 不变，将它作为参考基线。创建新实验，例如：
+
+```sh
+python3 scripts/new_lab.py 1
+```
+
+该命令会复制基线代码，增加对应的 Compose 服务和 Caddy 路由，并创建：
+
+```text
+lab01/scenario.json
+lab01/README.md
+lab01/reproduce.py
+```
+
+检查生成文件后，重新生成配置并启动实验：
+
+```sh
+make lab-reset
+make config
+make lab-up LAB=01
+```
+
+同时在 `/etc/hosts` 中加入：
+
+```text
+127.0.0.1 server-01.oauth.labs client-01.oauth.labs
+```
+
+完成实验实现后运行：
+
+```sh
+make lab-test LAB=01
+make experiment LAB=01
+```
+
+每个实验必须只引入一个主要缺陷，并实现 `fixed` 与 `vulnerable` 两种版本。`reproduce.py --variant ...` 必须输出一个 JSON 对象，包含布尔字段：
+
+```json
+{
+  "exploitable": true,
+  "impact_verified": true
+}
+```
+
+`make experiment LAB=01` 会依次启动两个版本，验证漏洞版可复现、修复版不可复现，并在每次运行前后删除 Compose 数据卷。生成的复现脚本默认是未完成占位符，在实现具体漏洞前不会运行。
+
+## 常用命令
+
+```sh
+make lab00                  # 启动 lab00
+make lab-up LAB=01          # 启动指定实验
+make lab-test LAB=01        # 执行通用烟测
+make lab-down               # 停止服务，保留数据
+make lab-reset              # 停止服务并删除数据卷
+make check                  # 执行 Python、Go 和配置检查
+docker compose logs -f      # 查看所有服务日志
+```
+
+不要把实验镜像、生成的账号或凭据部署到公网环境。
