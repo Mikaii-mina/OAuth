@@ -17,14 +17,26 @@ Add these entries to `/etc/hosts` (requires administrator access):
 
 Run **only on a trusted local machine**; Caddy binds to loopback. The first browser visit will show a certificate warning because Caddy issues a local CA certificate. Trust that CA for this isolated lab only if needed.
 
+## 团队使用流程
+
+队友使用相同的启动流程，但每台电脑的 Docker 数据卷和配置文件都是本地的，不从 GitHub 共享。
+
+**首次使用（每台电脑只需一次）：**安装并启动 Docker Desktop、安装 Go 1.23.2+，按上文配置 `/etc/hosts`，然后运行：
+
 ```sh
+git clone https://github.com/Mikaii-mina/OAuth.git
+cd OAuth
 make config
-make labs
-make smoke
+make lab00
 docker compose ps
+make smoke
 ```
 
-Visit `https://server-00.oauth.labs` to register a lab account, then `https://client-00.oauth.labs` to run the authorization-code flow. The client uses `state` and PKCE; `lab00` is a learning playground rather than a verified secure reference implementation. The smoke test checks health, the authorization URL's `state` and S256 PKCE parameters, and rejection of a bogus callback state. It does **not** exercise a complete authenticated flow or prove the implementation secure. It skips verification of the local Caddy CA certificate; never use this script against external hosts. To stop and delete local database data, run `make labsdown`. `make config` regenerates credentials, so stop and remove old volumes before regenerating and restarting.
+**日常使用：**先启动 Docker Desktop，在仓库目录运行 `make lab00`，确认 `docker compose ps` 中 `caddy`、`db`、`valkey`、`server-00` 和 `client-00` 均为 `Up`，再运行 `make smoke`。打开 `https://server-00.oauth.labs/register` 注册实验账号，然后访问 `https://client-00.oauth.labs` 演示授权流程。用完执行 `make lab-down`，保留本地实验数据。
+
+**需要清空环境时：**运行 `make lab-reset`、`make config`、`make lab00`、`make smoke`。`make lab-reset` 会删除本地数据库数据；不要单独运行 `make config`，否则新密码可能与旧数据库卷不一致。配置文件和凭据已被 Git 忽略，不要手动提交。
+
+The client uses `state` and PKCE; `lab00` is a learning playground rather than a verified secure reference implementation. The smoke test checks health, the authorization URL's `state` and S256 PKCE parameters, and rejection of a bogus callback state. It does **not** exercise a complete authenticated flow or prove the implementation secure. It skips verification of the local Caddy CA certificate; never use this script against external hosts.
 
 ## Adding future experiments
 
