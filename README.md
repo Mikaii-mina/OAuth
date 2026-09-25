@@ -35,9 +35,8 @@ make smoke
 
 确认 `caddy`、`db`、`valkey`、`server-00` 和 `client-00` 都显示为 `Up` 后，打开：
 
-- [server-00.oauth.labs]() 是授权服务器：负责注册、登录、授权和签发令牌。
-
-- [client-00.oauth.labs]() 是客户端应用：把你引导到授权服务器，取得授权后显示个人资料。
+- [server-00.oauth.labs](https://server-00.oauth.labs) 是授权服务器：负责注册、登录、用户授权和签发授权码/令牌。首次使用可访问 [注册页面](https://server-00.oauth.labs/register)。
+- [client-00.oauth.labs](https://client-00.oauth.labs) 是客户端应用：发起 OAuth 登录，接收授权回调并使用令牌获取用户资料。
 
 ### 日常使用
 
