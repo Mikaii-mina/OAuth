@@ -48,7 +48,7 @@ func Init() (*viper.Viper, error) {
 	cfg.SetDefault("cookie.max_age", 86400)
 	cfg.SetDefault("cookie.secure", false)
 	cfg.SetDefault("cookie.http_only", true)
-	cfg.SetDefault("cookie.samesite", "strict")
+	cfg.SetDefault("cookie.samesite", "lax")
 
 	cfg.SetDefault("redis.network", "tcp")
 	cfg.SetDefault("redis.host", "127.0.0.1")
@@ -159,7 +159,7 @@ func GetSessionOptions() sessions.Options {
 	case "lax":
 		opts.SameSite = http.SameSiteLaxMode
 	case "none":
-		opts.SameSite = http.SameSiteLaxMode
+		opts.SameSite = http.SameSiteNoneMode
 	default:
 		opts.SameSite = http.SameSiteStrictMode
 	}

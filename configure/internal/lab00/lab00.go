@@ -91,7 +91,7 @@ cookie:
   max_age: 80400
   http_only: true
   secure: true
-  samesite: 'strict'
+  samesite: 'lax'
 
 redis:
   host: 'valkey'
@@ -119,7 +119,7 @@ cookie:
   max_age: 80400
   http_only: true
   secure: true
-  samesite: 'strict'
+  samesite: 'lax'
 
 redis:
   host: 'valkey'
