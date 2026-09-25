@@ -6,7 +6,6 @@
 
 - Docker Desktop，包含 Docker Compose 和镜像构建功能
 - Go 1.23.2 或更高版本，用于生成配置
-- 本机 80 和 443 端口未被占用
 - `server-00.oauth.labs` 和 `client-00.oauth.labs` 解析到 `127.0.0.1`
 
 在 `/etc/hosts` 中加入以下内容，需要管理员权限：
@@ -17,13 +16,13 @@
 
 本平台只能在可信本机环境运行。Caddy 只绑定本机回环地址。首次访问时可能看到本地 CA 证书警告；确认域名确实是本地实验域名后，再按需要信任该证书。
 
-## 团队使用流程
+## 使用流程
 
-每位队友都使用相同流程，但 Docker 数据卷、生成配置和实验账号都保存在各自电脑上，不会通过 GitHub 共享。
+尽管相同流程，Docker 数据卷、生成配置和实验账号都保存在各自电脑上，不会通过 GitHub 共享。
 
 ### 首次使用
 
-每台电脑只需执行一次：安装并启动 Docker Desktop，安装 Go 1.23.2 或更高版本，配置 `/etc/hosts`，然后运行：
+安装并启动 Docker Desktop，安装 Go 1.23.2 或更高版本，配置 `/etc/hosts`，然后运行：
 
 ```sh
 git clone https://github.com/Mikaii-mina/OAuth.git
@@ -36,8 +35,9 @@ make smoke
 
 确认 `caddy`、`db`、`valkey`、`server-00` 和 `client-00` 都显示为 `Up` 后，打开：
 
-- `https://server-00.oauth.labs/register`：注册实验账号
-- `https://client-00.oauth.labs`：演示 OAuth 授权流程
+- [server-00.oauth.labs]() 是授权服务器：负责注册、登录、授权和签发令牌。
+
+- [client-00.oauth.labs]() 是客户端应用：把你引导到授权服务器，取得授权后显示个人资料。
 
 ### 日常使用
 
@@ -143,5 +143,3 @@ make lab-reset              # 停止服务并删除数据卷
 make check                  # 执行 Python、Go 和配置检查
 docker compose logs -f      # 查看所有服务日志
 ```
-
-不要把实验镜像、生成的账号或凭据部署到公网环境。
